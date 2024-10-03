@@ -3,8 +3,8 @@ set -e
 
 install_tools() {
   read -p "Installing tools. Press Enter to continue..."
-  sudo apt update
-  sudo apt install -y wget jq
+  sudo apt update && sudo apt upgrade -y
+  sudo apt install -y wget jq liblz4-tool
   read -p "Done. Press Enter to continue..."
   clear
 }
@@ -25,19 +25,19 @@ install_go() {
 
 install_story_geth() {
   read -p "Installing story-geth. Press Enter to continue..."
-  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3-b224fdf.tar.gz -O /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz
-  tar -xzf /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz -C /tmp
+  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3-b224fdf.tar.gz
+  tar -xzf geth-linux-amd64-0.9.3-b224fdf.tar.gz
   [ ! -d "$HOME/go/bin" ] && mkdir -p $HOME/go/bin
-  cp /tmp/geth-linux-amd64-0.9.3-b224fdf/geth $HOME/go/bin/story-geth
+  cp geth-linux-amd64-0.9.3-b224fdf/geth $HOME/go/bin/story-geth
   read -p "Done. Press Enter to continue..."
   clear
 }
 
 install_story() {
   read -p "Installing story. Press Enter to continue..."
-  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1-57567e5.tar.gz -O /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz
-  tar -xzf /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz -C /tmp
-  cp /tmp/story-linux-amd64-0.10.1-57567e5/story $HOME/go/bin/story
+  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1-57567e5.tar.gz
+  tar -xzf story-linux-amd64-0.10.1-57567e5.tar.gz
+  cp story-linux-amd64-0.10.1-57567e5/story $HOME/go/bin/story
   read -p "Done. Press Enter to continue..."
   clear
 }
@@ -51,8 +51,6 @@ init_iliad_network() {
 
 create_and_run_story_geth_service() {
   read -p "Creating and running story-geth service. Press Enter to continue..."
-  # Change to the temporary directory
-  cd /tmp
 
   # Download the story-geth.service file
   wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story-geth.service
@@ -67,15 +65,12 @@ create_and_run_story_geth_service() {
   sudo systemctl daemon-reload
   sudo systemctl unmask story-geth
   sudo systemctl enable story-geth
-  sudo systemctl restart story-geth && sudo journalctl -u story-geth -f
   read -p "Done. Press Enter to continue..."
   clear
 }
 
 create_and_run_story_consensus_service() {
   read -p "Creating and running story consensus service. Press Enter to continue..."
-  # Change to the temporary directory
-  cd /tmp
 
   # Download the story.service file
   sudo wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service
@@ -90,7 +85,6 @@ create_and_run_story_consensus_service() {
   sudo systemctl daemon-reload
   sudo systemctl unmask story
   sudo systemctl enable story
-  sudo systemctl restart story && sudo journalctl -u story -f
   read -p "Done. Press Enter to continue..."
   clear
 }
@@ -102,6 +96,9 @@ inform_status_command(){
 
 
 start_one_liner() {
+  cd
+  mkdir temp_dumps
+  cd temp_dumps/
   install_tools
   install_go
   install_story_geth
@@ -110,6 +107,8 @@ start_one_liner() {
   create_and_run_story_geth_service
   create_and_run_story_consensus_service
   inform_status_command
+  cd
+  rm -rf temp_dumps/
 }
 
 start_one_liner
