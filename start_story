@@ -35,8 +35,19 @@ init_iliad_network() {
 }
 
 create_and_run_story_geth_service() {
-  sudo wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story-geth.service -O /etc/systemd/system/story-geth.service
+  # Change to the temporary directory
+  cd /tmp
 
+  # Download the story-geth.service file
+  wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story-geth.service
+
+  # Replace the placeholders with the actual values
+  sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story-geth.service
+
+  # Move the file to the systemd directory
+  sudo cp story-geth.service /etc/systemd/system/story-geth.service
+
+  # Reload the systemd daemon, unmask the service, enable the service, restart the service and follow the logs
   sudo systemctl daemon-reload
   sudo systemctl unmask story-geth
   sudo systemctl enable story-geth
@@ -44,8 +55,19 @@ create_and_run_story_geth_service() {
 }
 
 create_and_run_story_consensus_service() {
-  sudo -q wget https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service -O /etc/systemd/system/story.service
+  # Change to the temporary directory
+  cd /tmp
 
+  # Download the story.service file
+  sudo -q wget https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service
+
+  # Replace the placeholders with the actual values
+  sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story.service
+
+  # Move the file to the systemd directory
+  sudo cp story.service /etc/systemd/system/story.service
+
+  # Reload the systemd daemon, unmask the service, enable the service, restart the service and follow the logs
   sudo systemctl daemon-reload
   sudo systemctl unmask story
   sudo systemctl enable story
