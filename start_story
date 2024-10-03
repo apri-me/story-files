@@ -2,11 +2,15 @@
 set -e
 
 install_tools() {
+  read -p "Installing tools. Press Enter to continue..."
   sudo apt update
   sudo apt install -y wget jq
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 install_go() {
+  read -p "Installing Go. Press Enter to continue..."
   ver="1.22.0"
   wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz"
   sudo rm -rf /usr/local/go
@@ -15,26 +19,38 @@ install_go() {
   echo "export PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin" >> ~/.bash_profile
   source ~/.bash_profile
   go version
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 install_story_geth() {
+  read -p "Installing story-geth. Press Enter to continue..."
   wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3-b224fdf.tar.gz -O /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz
   tar -xzf /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz -C /tmp
   [ ! -d "$HOME/go/bin" ] && mkdir -p $HOME/go/bin
   cp /tmp/geth-linux-amd64-0.9.3-b224fdf/geth $HOME/go/bin/story-geth
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 install_story() {
+  read -p "Installing story. Press Enter to continue..."
   wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1-57567e5.tar.gz -O /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz
   tar -xzf /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz -C /tmp
   cp /tmp/story-linux-amd64-0.10.1-57567e5/story $HOME/go/bin/story
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 init_iliad_network() {
+  read -p "Initializing the iliad network. Press Enter to continue..."
   $HOME/go/bin/story init --network iliad
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 create_and_run_story_geth_service() {
+  read -p "Creating and running story-geth service. Press Enter to continue..."
   # Change to the temporary directory
   cd /tmp
 
@@ -42,7 +58,7 @@ create_and_run_story_geth_service() {
   wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story-geth.service
 
   # Replace the placeholders with the actual values
-  sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story-geth.service
+  sudo sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story-geth.service
 
   # Move the file to the systemd directory
   sudo cp story-geth.service /etc/systemd/system/story-geth.service
@@ -52,17 +68,20 @@ create_and_run_story_geth_service() {
   sudo systemctl unmask story-geth
   sudo systemctl enable story-geth
   sudo systemctl restart story-geth && sudo journalctl -u story-geth -f
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 create_and_run_story_consensus_service() {
+  read -p "Creating and running story consensus service. Press Enter to continue..."
   # Change to the temporary directory
   cd /tmp
 
   # Download the story.service file
-  sudo -q wget https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service
+  sudo wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service
 
   # Replace the placeholders with the actual values
-  sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story.service
+  sudo sed -i "s|\${USER_NAME}|$USER|g; s|\${YOUR_HOME_DIR}|$HOME|g" story.service
 
   # Move the file to the systemd directory
   sudo cp story.service /etc/systemd/system/story.service
@@ -72,6 +91,8 @@ create_and_run_story_consensus_service() {
   sudo systemctl unmask story
   sudo systemctl enable story
   sudo systemctl restart story && sudo journalctl -u story -f
+  read -p "Done. Press Enter to continue..."
+  clear
 }
 
 inform_status_command(){
@@ -79,10 +100,6 @@ inform_status_command(){
   echo "curl -s localhost:26657/status | jq"
 }
 
-check_service_logs(){
-  sudo journalctl -u story-geth -f -o cat &
-  sudo journalctl -u story -f -o cat
-}
 
 start_one_liner() {
   install_tools
@@ -93,7 +110,6 @@ start_one_liner() {
   create_and_run_story_geth_service
   create_and_run_story_consensus_service
   inform_status_command
-  check_service_logs
 }
 
 start_one_liner
