@@ -3,7 +3,7 @@ set -e
 
 install_tools() {
   read -p "Installing tools. Press Enter to continue..."
-  sudo apt update && sudo apt upgrade -y
+  sudo apt update -y
   sudo apt install -y wget jq liblz4-tool
   read -p "Done. Press Enter to continue..."
   clear
