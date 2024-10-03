@@ -1,0 +1,22 @@
+# story
+[Unit]
+Description=Node-story
+After=network.target node-geth.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+WorkingDirectory=/root
+ExecStart=story run
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=node-story
+StartLimitInterval=0
+LimitNOFILE=65536
+LimitNPROC=65536
+
+[Install]
+WantedBy=multi-user.target
+

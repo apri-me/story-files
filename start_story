@@ -1,0 +1,77 @@
+#!/bin/sh
+set -e
+
+install_tools() {
+  sudo apt update
+  sudo apt install -y wget jq
+}
+
+install_go() {
+  ver="1.22.0"
+  wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz"
+  sudo rm -rf /usr/local/go
+  sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz"
+  rm "go$ver.linux-amd64.tar.gz"
+  echo "export PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin" >> ~/.bash_profile
+  source ~/.bash_profile
+  go version
+}
+
+install_story_geth() {
+  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/geth-public/geth-linux-amd64-0.9.3-b224fdf.tar.gz -O /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz
+  tar -xzf /tmp/geth-linux-amd64-0.9.3-b224fdf.tar.gz -C /tmp
+  [ ! -d "$HOME/go/bin" ] && mkdir -p $HOME/go/bin
+  cp /tmp/geth-linux-amd64-0.9.3-b224fdf/geth $HOME/go/bin/story-geth
+}
+
+install_story() {
+  wget -q https://story-geth-binaries.s3.us-west-1.amazonaws.com/story-public/story-linux-amd64-0.10.1-57567e5.tar.gz -O /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz
+  tar -xzf /tmp/story-linux-amd64-0.10.1-57567e5.tar.gz -C /tmp
+  cp /tmp/story-linux-amd64-0.10.1-57567e5/story $HOME/go/bin/story
+}
+
+init_iliad_network() {
+  $HOME/go/bin/story init --network iliad
+}
+
+create_and_run_story_geth_service() {
+  sudo wget -q https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story-geth.service -O /etc/systemd/system/story-geth.service
+
+  sudo systemctl daemon-reload
+  sudo systemctl unmask story-geth
+  sudo systemctl enable story-geth
+  sudo systemctl restart story-geth && sudo journalctl -u story-geth -f
+}
+
+create_and_run_story_consensus_service() {
+  sudo -q wget https://raw.githubusercontent.com/apri-me/story-files/refs/heads/main/story.service -O /etc/systemd/system/story.service
+
+  sudo systemctl daemon-reload
+  sudo systemctl unmask story
+  sudo systemctl enable story
+  sudo systemctl restart story && sudo journalctl -u story -f
+}
+
+inform_status_command(){
+  echo "You can check the status by running the following command:"
+  echo "curl -s localhost:26657/status | jq"
+}
+
+check_service_logs(){
+  sudo journalctl -u story-geth -f -o cat &
+  sudo journalctl -u story -f -o cat
+}
+
+start_one_liner() {
+  install_tools
+  install_go
+  install_story_geth
+  install_story
+  init_iliad_network
+  create_and_run_story_geth_service
+  create_and_run_story_consensus_service
+  inform_status_command
+  check_service_logs
+}
+
+start_one_liner
